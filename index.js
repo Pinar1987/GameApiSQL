@@ -54,6 +54,22 @@ app.get('/top-players', async (req, res) => {
   }
 });
 
+app.get('/inactive-players', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT name FROM players
+      WHERE id NOT IN (
+        SELECT DISTINCT player_id FROM scores
+      )
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+
 const PORT = 3000;
 // Start server
 app.listen(PORT, () => {
