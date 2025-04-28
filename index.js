@@ -25,10 +25,10 @@ app.get('/', (req, res) => {
 app.get('/players-scores', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT players.name AS player_name, games.title AS game_title, scores.score
-      FROM players
-      JOIN scores ON players.id = scores.player_id
-      JOIN games ON games.id = scores.game_id
+      SELECT players.name, games.title, scores.score
+      FROM scores
+      INNER JOIN players ON scores.player_id = players.id
+      INNER JOIN games ON scores.game_id = games.id
     `);
     res.json(result.rows);
   } catch (err) {
@@ -40,10 +40,10 @@ app.get('/players-scores', async (req, res) => {
 app.get('/top-players', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT players.name AS player_name, SUM(scores.score) AS total_score
-      FROM players
-      JOIN scores ON players.id = scores.player_id
-      GROUP BY players.name
+      SELECT players.name, SUM(scores.score) AS total_score
+      FROM scores
+      INNER JOIN players ON scores.player_id = players.id
+      GROUP BY (players.name)
       ORDER BY total_score DESC
       LIMIT 3
     `);
@@ -57,10 +57,10 @@ app.get('/top-players', async (req, res) => {
 app.get('/inactive-players', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT name FROM players
-      WHERE id NOT IN (
-        SELECT DISTINCT player_id FROM scores
-      )
+      SELECT players.name 
+      FROM players
+      LEFT JOIN scores ON players.id = scores.player_id
+      WHERE scores.id IS NULL
     `);
     res.json(result.rows);
   } catch (err) {
@@ -72,11 +72,24 @@ app.get('/inactive-players', async (req, res) => {
 app.get('/popular-genres', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT games.genre, COUNT(scores.id) AS play_count
-      FROM games
-      JOIN scores ON games.id = scores.game_id
+      SELECT games.genre, COUNT(*)
+      FROM scores
+      INNER JOIN games ON scores.game_id = games.id
       GROUP BY games.genre
-      ORDER BY play_count DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+app.get('/recent-players', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT name, join_date
+      FROM players
+      WHERE join_date >= CURRENT_DATE - INTERVAL '30 days'
     `);
     res.json(result.rows);
   } catch (err) {
