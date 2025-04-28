@@ -69,6 +69,22 @@ app.get('/inactive-players', async (req, res) => {
   }
 });
 
+app.get('/popular-genres', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT games.genre, COUNT(scores.id) AS play_count
+      FROM games
+      JOIN scores ON games.id = scores.game_id
+      GROUP BY games.genre
+      ORDER BY play_count DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 
 const PORT = 3000;
 // Start server
