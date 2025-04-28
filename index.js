@@ -37,6 +37,22 @@ app.get('/players-scores', async (req, res) => {
   }
 });
 
+app.get('/top-players', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT players.name AS player_name, SUM(scores.score) AS total_score
+      FROM players
+      JOIN scores ON players.id = scores.player_id
+      GROUP BY players.name
+      ORDER BY total_score DESC
+      LIMIT 3
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
 
 const PORT = 3000;
 // Start server
