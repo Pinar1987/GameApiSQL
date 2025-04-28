@@ -17,7 +17,9 @@ const pool = new Pool({
 
 
 app.use(express.json());
-
+app.get('/', (req, res) => {
+  res.send('Game Dashboard API is running!');
+});
 
 
 const PORT = 3000;
