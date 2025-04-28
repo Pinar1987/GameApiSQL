@@ -22,6 +22,22 @@ app.get('/', (req, res) => {
 });
 
 
+app.get('/players-scores', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT players.name AS player_name, games.title AS game_title, scores.score
+      FROM players
+      JOIN scores ON players.id = scores.player_id
+      JOIN games ON games.id = scores.game_id
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+
 const PORT = 3000;
 // Start server
 app.listen(PORT, () => {
